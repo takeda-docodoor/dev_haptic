@@ -1,37 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# dev_haptic
 
-## Getting Started
+ボタンをタップするとスマホが振動（ハプティックフィードバック）する Web デモ。
+[Next.js](https://nextjs.org) と [web-haptics](https://github.com/lochie/web-haptics) で実装している。
 
-First, run the development server:
+## 対応環境
+
+| プラットフォーム | 対応 | 仕組み |
+| --- | --- | --- |
+| iOS | iOS 18 以降の Safari | `<input type="checkbox" switch>` のトグル時の触覚フィードバックを利用 |
+| Android | Chrome など Vibration API 対応ブラウザ | `navigator.vibrate` |
+| iPad・PC | 非対応 | 振動しない |
+
+## 構成
+
+| ファイル | 役割 |
+| --- | --- |
+| `src/app/haptic-pad.tsx` | 振動パターンの一覧とボタンの配置。パターンを増やすときは `PATTERNS` に追加する |
+| `src/app/haptic-button.tsx` | ボタン 1 つ分。振動パターンに合わせてリップルエフェクトを出す |
+| `src/lib/haptic-pulses.ts` | 振動パターンから各振動の開始時刻・長さ・強さを計算する |
+| `src/app/page.tsx` | トップページ。対応環境の表示もここ |
+
+## 開発サーバーの起動
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開く。ファイルを編集すると自動で反映される。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 実機（スマホ）での確認
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+ハプティックは PC のブラウザでは動作しないため、同じ Wi-Fi に接続したスマホから開発サーバーにアクセスして確認する。
 
-## Learn More
+### 1. Mac のローカル IP アドレスを調べる
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+ipconfig getifaddr en0
+# 例: 192.168.0.11
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. `next.config.ts` の `allowedDevOrigins` に IP アドレスを設定する
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```ts
+allowedDevOrigins: ["192.168.0.11"],
+```
 
-## Deploy on Vercel
+Next.js の開発サーバーは、`localhost` と起動時に指定したホスト名以外からの JS 読み込みを既定でブロックする。
+IP アドレスが登録されていないと、ページは表示されても JS が動かず、**ボタンを押しても波紋も振動も起きない**。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- スキーム（`http://`）やポート（`:3000`）は付けず、ホスト名だけを書く
+- IP アドレスは DHCP により Wi-Fi の再接続などで変わることがある。変わったら書き換える
+- この設定は開発サーバーでのみ有効で、本番ビルド・Vercel には影響しない
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# dev_haptic
+### 3. LAN に公開して起動する
+
+```bash
+npm run dev -- -H 0.0.0.0
+```
+
+設定を変更した場合は、開発サーバーの再起動が必要。
+
+### 4. スマホで開く
+
+スマホのブラウザで `http://<IP アドレス>:3000`（例: `http://192.168.0.11:3000`）を開く。
+
+HTTP で動作しない場合は HTTPS で起動する（自己署名証明書のため、スマホ側で警告を許可する必要がある）。
+
+```bash
+npm run dev -- -H 0.0.0.0 --experimental-https
+```
+
+## ビルド
+
+```bash
+npm run build
+npm run start
+```
+
+## 参考
+
+- [Next.js ドキュメント](https://nextjs.org/docs)
+- [web-haptics](https://github.com/lochie/web-haptics)（デモ: [haptics.lochie.me](https://haptics.lochie.me)）
+
+## ライブラリなし（Vanilla JS）での実装
+
+web-haptics を使わず、Vanilla JS だけでも実装できる。Android は `navigator.vibrate`、iOS Safari は非表示の `<input type="checkbox" switch>` をクリックしたときの触覚フィードバックを流用する（通称「スイッチハック」）。
+
+ただし iOS では 1 回の短い振動しか出せず、振動パターンや長さ・強さの表現はできない。
