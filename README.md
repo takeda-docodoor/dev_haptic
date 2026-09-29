@@ -15,8 +15,8 @@
 
 | ファイル | 役割 |
 | --- | --- |
-| `src/app/haptic-pad.tsx` | 振動パターンの一覧とボタンの配置。パターンを増やすときは `PATTERNS` に追加する |
-| `src/app/haptic-button.tsx` | ボタン 1 つ分。振動パターンに合わせてリップルエフェクトを出す |
+| `src/app/haptic-pad.tsx` | 振動パターンの一覧とボタンの配置。振動パターンに合わせて、タップ位置から背景にリップルエフェクトを出す。パターンを増やすときは `PATTERNS` に追加する |
+| `src/app/haptic-button.tsx` | ボタン 1 つ分。押すと縮み、タップ位置を親に渡す |
 | `src/lib/haptic-pulses.ts` | 振動パターンから各振動の開始時刻・長さ・強さを計算する |
 | `src/app/page.tsx` | トップページ。対応環境の表示もここ |
 
